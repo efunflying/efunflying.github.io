@@ -5,17 +5,17 @@
   
   <title>一道矩阵转置的算法题 | 迎风飞翔</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。  0123456789(1)=&amp;gt;0246813579(2)(2)表示成这样可能看起来更清楚些：0246813579  看起来有这样的关系： 假设原位置是k，则if (k == 2i){    tartget[k] = i;}if (k == 2i + 1){    target[k] =">
+  <meta name="description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。 123456789101112---------| 0 | 1 |---------| 2 | 3 |                       ------------------------------                       | 0 | 2 | 4 | 6 | 8">
 <meta name="keywords" content="Algorithm">
 <meta property="og:type" content="article">
 <meta property="og:title" content="一道矩阵转置的算法题">
 <meta property="og:url" content="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/index.html">
 <meta property="og:site_name" content="迎风飞翔">
-<meta property="og:description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。  0123456789(1)=&amp;gt;0246813579(2)(2)表示成这样可能看起来更清楚些：0246813579  看起来有这样的关系： 假设原位置是k，则if (k == 2i){    tartget[k] = i;}if (k == 2i + 1){    target[k] =">
-<meta property="og:updated_time" content="2017-07-17T16:54:27.000Z">
+<meta property="og:description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。 123456789101112---------| 0 | 1 |---------| 2 | 3 |                       ------------------------------                       | 0 | 2 | 4 | 6 | 8">
+<meta property="og:updated_time" content="2017-07-17T17:26:47.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="一道矩阵转置的算法题">
-<meta name="twitter:description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。  0123456789(1)=&amp;gt;0246813579(2)(2)表示成这样可能看起来更清楚些：0246813579  看起来有这样的关系： 假设原位置是k，则if (k == 2i){    tartget[k] = i;}if (k == 2i + 1){    target[k] =">
+<meta name="twitter:description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。 123456789101112---------| 0 | 1 |---------| 2 | 3 |                       ------------------------------                       | 0 | 2 | 4 | 6 | 8">
   
   
     <link rel="icon" href="/favicon.png">
@@ -87,19 +87,19 @@
     <div class="article-entry" itemprop="articleBody">
       
         <p>今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。</p>
-<p><table></table></p>
-<tr><td>0</td><td>1</td></tr><br><tr><td>2</td><td>3</td></tr><br><tr><td>4</td><td>5</td></tr><br><tr><td>6</td><td>7</td></tr><br><tr><td>8</td><td>9</td></tr><br><br>(1)<br><br>=&gt;<br><br><table><br><tr><td>0</td><td>2</td><td>4</td><td>6</td><td>8</td></tr><br><tr><td>1</td><td>3</td><td>5</td><td>7</td><td>9</td></tr><br></table><br>(2)<br><br><br>(2)表示成这样可能看起来更清楚些：<br><br><tr><td>0</td><td>2</td></tr><br><tr><td>4</td><td>6</td></tr><br><tr><td>8</td><td>1</td></tr><br><tr><td>3</td><td>5</td></tr><br><tr><td>7</td><td>9</td></tr>
-
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">---------</div><div class="line">| 0 | 1 |</div><div class="line">---------</div><div class="line">| 2 | 3 |                       ---------------------</div><div class="line">---------                       | 0 | 2 | 4 | 6 | 8 |</div><div class="line">| 4 | 5 |         ===&gt;          ---------------------</div><div class="line">---------                       | 1 | 3 | 5 | 7 | 9 |</div><div class="line">| 6 | 7 |                       ---------------------</div><div class="line">---------                              (2)           </div><div class="line">| 8 | 9 |</div><div class="line">---------</div><div class="line">  (1)</div></pre></td></tr></table></figure>
+<p>(2)表示成这样可能看起来更清楚些：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">                                  ---------</div><div class="line">                                  | 0 | 2 |</div><div class="line">                                  ---------</div><div class="line">---------------------             | 4 | 6 |</div><div class="line">| 0 | 2 | 4 | 6 | 8 |             ---------</div><div class="line">---------------------    ===&gt;     | 8 | 1 |</div><div class="line">| 1 | 3 | 5 | 7 | 9 |             ---------</div><div class="line">---------------------             | 3 | 5 |</div><div class="line">       (2)                        ---------</div><div class="line">                                  | 7 | 9 |</div><div class="line">                                  ---------</div><div class="line">                                     (2&apos;)</div></pre></td></tr></table></figure>
 <p>看起来有这样的关系：</p>
-<p>假设原位置是k，则<br>if (k == 2<em>i)<br>{<br>    tartget[k] = i;<br>}<br>if (k == 2</em>i + 1)<br>{<br>    target[k] = 5+i;<br>}</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">假设原位置是k，则</div><div class="line">if (k == 2*i)</div><div class="line">&#123;</div><div class="line">    target[k] = i;</div><div class="line">&#125; </div><div class="line">if (k == 2*i + 1)</div><div class="line">&#123;</div><div class="line">    target[k] = 5+i;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>注意到每个轮转最后都是一个闭环(应该是可以证明的):<br>以i=0为例，2*0+1=1, target(1)=5; target(5)=7; target(7)=8; target(8)=4; target(4)=2; target(2)=1;</p>
-<p>因此有：<br>count = 10<br>count = count - 2 /<em>首尾两单元不用动</em>/<br>for(i=0; 2<em>i+1<5 &&="" count="">0 ; i++)<br>{<br>    transfer(2</5></em>i+1);<br>}</p>
-<p>其中<br>transfer(k)<br>{<br>    for(i = k; k!=target(i); i=target(i))<br>    {<br>        tmp = array[target(i)];<br>        array[target(i)] = tmp;<br>        count –; /<em>某个元素已经就位</em>/<br>    }<br>    array[k] = tmp;<br>    count –; /<em>某个元素已经就位</em>/<br>}</p>
+<p>因此有：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">count = 10</div><div class="line">count = count - 2 /*首尾两单元不用动*/</div><div class="line">for(i=0; 2*i+1&lt;5 &amp;&amp; count &gt;0 ; i++)</div><div class="line">&#123;</div><div class="line">    transfer(2*i+1);</div><div class="line">&#125;</div><div class="line"></div><div class="line">transfer(k)</div><div class="line">&#123;</div><div class="line">    for(i = k; k!=target(i); i=target(i))</div><div class="line">    &#123;</div><div class="line">        tmp = array[target(i)];</div><div class="line">        array[target(i)] = tmp;</div><div class="line">        count --; /*某个元素已经就位*/</div><div class="line">    &#125;</div><div class="line">    array[k] = tmp;</div><div class="line">    count --; /*某个元素已经就位*/</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>因此最终只需要移动10次，一个单位的临时存储就可以完成。</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/" data-id="cj58ead2b0003mtr9r4c7vx30" class="article-share-link">Share</a>
+      <a data-url="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/" data-id="cj58el79t000308r9t7lmm2c9" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Algorithm/">Algorithm</a></li></ul>
