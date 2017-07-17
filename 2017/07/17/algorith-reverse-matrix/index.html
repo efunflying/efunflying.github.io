@@ -3,18 +3,19 @@
 <head>
   <meta charset="utf-8">
   
-  <title>一些很有用的RPM命令的总结 | 迎风飞翔</title>
+  <title>一道矩阵转置的算法题 | 迎风飞翔</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。 简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来t">
+  <meta name="description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。  0123456789(1)=&amp;gt;0246813579(2)(2)表示成这样可能看起来更清楚些：0246813579  看起来有这样的关系： 假设原位置是k，则if (k == 2i){    tartget[k] = i;}if (k == 2i + 1){    target[k] =">
+<meta name="keywords" content="Algorithm">
 <meta property="og:type" content="article">
-<meta property="og:title" content="一些很有用的RPM命令的总结">
-<meta property="og:url" content="https://efunflying.github.io/2017/04/12/rpm-commands/index.html">
+<meta property="og:title" content="一道矩阵转置的算法题">
+<meta property="og:url" content="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/index.html">
 <meta property="og:site_name" content="迎风飞翔">
-<meta property="og:description" content="最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。 简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来t">
-<meta property="og:updated_time" content="2017-07-02T05:49:59.000Z">
+<meta property="og:description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。  0123456789(1)=&amp;gt;0246813579(2)(2)表示成这样可能看起来更清楚些：0246813579  看起来有这样的关系： 假设原位置是k，则if (k == 2i){    tartget[k] = i;}if (k == 2i + 1){    target[k] =">
+<meta property="og:updated_time" content="2017-07-17T16:54:27.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="一些很有用的RPM命令的总结">
-<meta name="twitter:description" content="最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。 简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来t">
+<meta name="twitter:title" content="一道矩阵转置的算法题">
+<meta name="twitter:description" content="今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。  0123456789(1)=&amp;gt;0246813579(2)(2)表示成这样可能看起来更清楚些：0246813579  看起来有这样的关系： 假设原位置是k，则if (k == 2i){    tartget[k] = i;}if (k == 2i + 1){    target[k] =">
   
   
     <link rel="icon" href="/favicon.png">
@@ -63,10 +64,10 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main"><article id="post-rpm-commands" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-algorith-reverse-matrix" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
-    <a href="/2017/04/12/rpm-commands/" class="article-date">
-  <time datetime="2017-04-12T05:36:05.000Z" itemprop="datePublished">2017-04-12</time>
+    <a href="/2017/07/17/algorith-reverse-matrix/" class="article-date">
+  <time datetime="2017-07-17T15:45:57.000Z" itemprop="datePublished">2017-07-17</time>
 </a>
     
   </div>
@@ -77,7 +78,7 @@
         
   
     <h1 class="article-title" itemprop="name">
-      一些很有用的RPM命令的总结
+      一道矩阵转置的算法题
     </h1>
   
 
@@ -85,43 +86,34 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。</p>
-<p>简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来toolchain的升级需求，因此在很多时候，是需要解决在过程中的包依赖（包括版本依赖）的，也就不可避免的要做一些包的backport，以使新kernel的rpm包依赖的一些rpm包能运行在CentOS 6下。</p>
-<p>在这个过程中，一些命令发现被用到的频率非常高，所以在这里整理一下。</p>
-<ol>
-<li>rpm -qpl xxxxx.rpm     有时候下了一个包，你想知道这个包里有哪些文件，将来会被放到什么目录下，这个命令很有用</li>
-<li>rpm -qf /path/to/file  有时候提示你CentOS 6下缺了某个文件，你想知道这个文件应该去CentOS 7下的哪个包里找，可以在CentOS 7下用whereis找到该文件，然后用这个命令查出属于哪个包</li>
-<li>rpm2cpio xxxxx.rpm | cpio -dim  当你想查看一下rpm包内的某个文件，但却并不想安装它的时候，把它解开来是个比较简单的方法</li>
-<li>rpm -qp –scripts xxxx.rpm 当你想查看一下某个rpm包在安装前后会执行哪些操作时，可以用这个命令来看，在安装过程（rpm -i）中加-vv参数可以观察这些脚本的执行情况。</li>
-<li>rpm -qpR xxxxx.rpm     有时候你想提前知道某个包依赖哪些包，可以通过这个命令查看</li>
-<li>rpm -q –whatrequires xxxx  查看某包被哪些包依赖</li>
-</ol>
+        <p>今天和新来的同事闲聊中听到一道算法题，讲一个2*5的矩阵，怎样原地转置。画了一下问题之后，思路就打开了。</p>
+<p><table></table></p>
+<tr><td>0</td><td>1</td></tr><br><tr><td>2</td><td>3</td></tr><br><tr><td>4</td><td>5</td></tr><br><tr><td>6</td><td>7</td></tr><br><tr><td>8</td><td>9</td></tr><br><br>(1)<br><br>=&gt;<br><br><table><br><tr><td>0</td><td>2</td><td>4</td><td>6</td><td>8</td></tr><br><tr><td>1</td><td>3</td><td>5</td><td>7</td><td>9</td></tr><br></table><br>(2)<br><br><br>(2)表示成这样可能看起来更清楚些：<br><br><tr><td>0</td><td>2</td></tr><br><tr><td>4</td><td>6</td></tr><br><tr><td>8</td><td>1</td></tr><br><tr><td>3</td><td>5</td></tr><br><tr><td>7</td><td>9</td></tr>
+
+<p>看起来有这样的关系：</p>
+<p>假设原位置是k，则<br>if (k == 2<em>i)<br>{<br>    tartget[k] = i;<br>}<br>if (k == 2</em>i + 1)<br>{<br>    target[k] = 5+i;<br>}</p>
+<p>注意到每个轮转最后都是一个闭环(应该是可以证明的):<br>以i=0为例，2*0+1=1, target(1)=5; target(5)=7; target(7)=8; target(8)=4; target(4)=2; target(2)=1;</p>
+<p>因此有：<br>count = 10<br>count = count - 2 /<em>首尾两单元不用动</em>/<br>for(i=0; 2<em>i+1<5 &&="" count="">0 ; i++)<br>{<br>    transfer(2</5></em>i+1);<br>}</p>
+<p>其中<br>transfer(k)<br>{<br>    for(i = k; k!=target(i); i=target(i))<br>    {<br>        tmp = array[target(i)];<br>        array[target(i)] = tmp;<br>        count –; /<em>某个元素已经就位</em>/<br>    }<br>    array[k] = tmp;<br>    count –; /<em>某个元素已经就位</em>/<br>}</p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://efunflying.github.io/2017/04/12/rpm-commands/" data-id="cj58ead2m0006mtr9wuj8yy1w" class="article-share-link">Share</a>
+      <a data-url="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/" data-id="cj58ead2b0003mtr9r4c7vx30" class="article-share-link">Share</a>
       
       
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Algorithm/">Algorithm</a></li></ul>
+
     </footer>
   </div>
   
     
 <nav id="article-nav">
   
-    <a href="/2017/06/25/Machine-Learning-Start/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          Machine Learning课程感想
-        
-      </div>
-    </a>
   
-  
-    <a href="/2015/08/22/2015-08-22-hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2017/07/09/system-tap-kernel-update/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">Hello World</div>
+      <div class="article-nav-title">利用SystemTap辅助查找kernel panic的原因</div>
     </a>
   
 </nav>
