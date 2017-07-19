@@ -1,18 +1,237 @@
-<%- partial('_partial/head') %>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>一道矩阵转置的算法题 | 迎风飞翔</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="今天和新来的同事闲聊中听到一道算法题，问一个2*5的矩阵，怎样原地转置。回来简单想了一下，画了一下图之后，思路一下就打开了。 123456789101112---------| 0 | 1 |---------| 2 | 3 |                       ------------------------------                       | 0 | 2 |">
+<meta name="keywords" content="Algorithm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一道矩阵转置的算法题">
+<meta property="og:url" content="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/index.html">
+<meta property="og:site_name" content="迎风飞翔">
+<meta property="og:description" content="今天和新来的同事闲聊中听到一道算法题，问一个2*5的矩阵，怎样原地转置。回来简单想了一下，画了一下图之后，思路一下就打开了。 123456789101112---------| 0 | 1 |---------| 2 | 3 |                       ------------------------------                       | 0 | 2 |">
+<meta property="og:updated_time" content="2017-07-17T17:59:54.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一道矩阵转置的算法题">
+<meta name="twitter:description" content="今天和新来的同事闲聊中听到一道算法题，问一个2*5的矩阵，怎样原地转置。回来简单想了一下，画了一下图之后，思路一下就打开了。 123456789101112---------| 0 | 1 |---------| 2 | 3 |                       ------------------------------                       | 0 | 2 |">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
 <body>
   <div id="container">
     <div id="wrap">
-      <%- partial('_partial/header', null, {cache: !config.relative_link}) %>
-      <div class="outer">
-        <section id="main"><%- body %></section>
-        <% if (theme.sidebar && theme.sidebar !== 'bottom'){ %>
-          <%- partial('_partial/sidebar', null, {cache: !config.relative_link}) %>
-        <% } %>
-      </div>
-      <%- partial('_partial/footer', null, {cache: !config.relative_link}) %>
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">迎风飞翔</a>
+      </h1>
+      
     </div>
-    <%- partial('_partial/mobile-nav', null, {cache: !config.relative_link}) %>
-    <%- partial('_partial/after-footer') %>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/about">关于</a>
+        
+          <a class="main-nav-link" href="/atom.xml">订阅</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://efunflying.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-algorith-reverse-matrix" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/07/17/algorith-reverse-matrix/" class="article-date">
+  <time datetime="2017-07-17T15:45:57.000Z" itemprop="datePublished">2017-07-17</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      一道矩阵转置的算法题
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>今天和新来的同事闲聊中听到一道算法题，问一个2*5的矩阵，怎样原地转置。回来简单想了一下，画了一下图之后，思路一下就打开了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">---------</div><div class="line">| 0 | 1 |</div><div class="line">---------</div><div class="line">| 2 | 3 |                       ---------------------</div><div class="line">---------                       | 0 | 2 | 4 | 6 | 8 |</div><div class="line">| 4 | 5 |         ===&gt;          ---------------------</div><div class="line">---------                       | 1 | 3 | 5 | 7 | 9 |</div><div class="line">| 6 | 7 |                       ---------------------</div><div class="line">---------                              (2)           </div><div class="line">| 8 | 9 |</div><div class="line">---------</div><div class="line">  (1)</div></pre></td></tr></table></figure>
+<p>(2)把图画成这样，就更清楚了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">                                  ---------</div><div class="line">                                  | 0 | 2 |</div><div class="line">                                  ---------</div><div class="line">---------------------             | 4 | 6 |</div><div class="line">| 0 | 2 | 4 | 6 | 8 |             ---------</div><div class="line">---------------------    ===&gt;     | 8 | 1 |</div><div class="line">| 1 | 3 | 5 | 7 | 9 |             ---------</div><div class="line">---------------------             | 3 | 5 |</div><div class="line">       (2)                        ---------</div><div class="line">                                  | 7 | 9 |</div><div class="line">                                  ---------</div><div class="line">                                     (2&apos;)</div></pre></td></tr></table></figure>
+<p>看起来有这样的关系：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">假设原位置是k，则</div><div class="line">if (k == 2 * i)</div><div class="line">&#123;</div><div class="line">    target(k) = i;</div><div class="line">&#125; </div><div class="line">if (k == 2 * i + 1)</div><div class="line">&#123;</div><div class="line">    target(k) = 5 + i;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>注意到每个轮转最后都是一个闭环(应该是可以证明的):<br>以i=0为例，2*0+1=1, target(1)=5; target(5)=7; target(7)=8; target(8)=4; target(4)=2; target(2)=1;</p>
+<p>因此有：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">count = 10</div><div class="line">count = count - 2 /*首尾两单元不用动*/</div><div class="line">for(i=0; 2*i+1&lt;5 &amp;&amp; count &gt;0; i++)</div><div class="line">&#123;</div><div class="line">    transfer(2 * i + 1);</div><div class="line">&#125;</div><div class="line"></div><div class="line">transfer(k)</div><div class="line">&#123;</div><div class="line">    for(i = k; k!=target(i); i=target(i))</div><div class="line">    &#123;</div><div class="line">        tmp = array[target(i)];</div><div class="line">        array[target(i)] = tmp;</div><div class="line">        count --; /*某个元素已经就位*/</div><div class="line">    &#125;</div><div class="line">    array[k] = tmp;</div><div class="line">    count --; /*某个元素已经就位*/</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>因此最终只需要移动10-2次，一个单位的临时存储就可以完成。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://efunflying.github.io/2017/07/17/algorith-reverse-matrix/" data-id="cj5b8wsoe000243r9771n1lkb" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Algorithm/">Algorithm</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/07/19/repair-tcp-connection/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          (译)修复TCP连接
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/07/09/system-tap-kernel-update/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">利用SystemTap辅助查找kernel panic的原因</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Algorithm/">Algorithm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/">TCP/IP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernel/">kernel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lwn-net/">lwn.net</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Algorithm/" style="font-size: 10px;">Algorithm</a> <a href="/tags/TCP-IP/" style="font-size: 10px;">TCP/IP</a> <a href="/tags/kernel/" style="font-size: 20px;">kernel</a> <a href="/tags/lwn-net/" style="font-size: 10px;">lwn.net</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/07/19/repair-tcp-connection/">(译)修复TCP连接</a>
+          </li>
+        
+          <li>
+            <a href="/2017/07/17/algorith-reverse-matrix/">一道矩阵转置的算法题</a>
+          </li>
+        
+          <li>
+            <a href="/2017/07/09/system-tap-kernel-update/">利用SystemTap辅助查找kernel panic的原因</a>
+          </li>
+        
+          <li>
+            <a href="/2017/06/25/Machine-Learning-Start/">Machine Learning课程感想</a>
+          </li>
+        
+          <li>
+            <a href="/2017/04/12/rpm-commands/">一些很有用的RPM命令的总结</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 Allen Fang<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/about" class="mobile-nav-link">关于</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">订阅</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
   </div>
 </body>
 </html>
