@@ -1,18 +1,237 @@
-<%- partial('_partial/head') %>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>利用SystemTap辅助查找kernel panic的原因 | 迎风飞翔</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="最近在把产品kernel base从centos 6携带的2.6.32升级到centos 7携带的3.10的过程中，遇到kernel panic的case，问题可重现，且产生的vmcore现场都非常相似，判断应该是同一个问题： 1234567891011121314151617181920212223242526272829PID: 7220   TASK: ffff88006580bec0  C">
+<meta name="keywords" content="kernel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用SystemTap辅助查找kernel panic的原因">
+<meta property="og:url" content="https://efunflying.github.io/2017/07/09/system-tap-kernel-update/index.html">
+<meta property="og:site_name" content="迎风飞翔">
+<meta property="og:description" content="最近在把产品kernel base从centos 6携带的2.6.32升级到centos 7携带的3.10的过程中，遇到kernel panic的case，问题可重现，且产生的vmcore现场都非常相似，判断应该是同一个问题： 1234567891011121314151617181920212223242526272829PID: 7220   TASK: ffff88006580bec0  C">
+<meta property="og:updated_time" content="2017-07-09T12:54:46.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="利用SystemTap辅助查找kernel panic的原因">
+<meta name="twitter:description" content="最近在把产品kernel base从centos 6携带的2.6.32升级到centos 7携带的3.10的过程中，遇到kernel panic的case，问题可重现，且产生的vmcore现场都非常相似，判断应该是同一个问题： 1234567891011121314151617181920212223242526272829PID: 7220   TASK: ffff88006580bec0  C">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
 <body>
   <div id="container">
     <div id="wrap">
-      <%- partial('_partial/header', null, {cache: !config.relative_link}) %>
-      <div class="outer">
-        <section id="main"><%- body %></section>
-        <% if (theme.sidebar && theme.sidebar !== 'bottom'){ %>
-          <%- partial('_partial/sidebar', null, {cache: !config.relative_link}) %>
-        <% } %>
-      </div>
-      <%- partial('_partial/footer', null, {cache: !config.relative_link}) %>
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">迎风飞翔</a>
+      </h1>
+      
     </div>
-    <%- partial('_partial/mobile-nav', null, {cache: !config.relative_link}) %>
-    <%- partial('_partial/after-footer') %>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">首页</a>
+        
+          <a class="main-nav-link" href="/archives">归档</a>
+        
+          <a class="main-nav-link" href="/about">关于</a>
+        
+          <a class="main-nav-link" href="/atom.xml">订阅</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://efunflying.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-system-tap-kernel-update" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/07/09/system-tap-kernel-update/" class="article-date">
+  <time datetime="2017-07-09T12:42:55.000Z" itemprop="datePublished">2017-07-09</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      利用SystemTap辅助查找kernel panic的原因
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>最近在把产品kernel base从centos 6携带的2.6.32升级到centos 7携带的3.10的过程中，遇到kernel panic的case，问题可重现，且产生的vmcore现场都非常相似，判断应该是同一个问题：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">PID: 7220   TASK: ffff88006580bec0  CPU: 1   COMMAND: &quot;dpid&quot;  </div><div class="line"> #0 [ffff8800658c7b30] machine_kexec at ffffffff81059bdb  </div><div class="line"> #1 [ffff8800658c7b90] __crash_kexec at ffffffff81105382</div><div class="line"> #2 [ffff8800658c7c60] crash_kexec at ffffffff81105470</div><div class="line"> #3 [ffff8800658c7c78] oops_end at ffffffff8168cd88</div><div class="line"> #4 [ffff8800658c7ca0] die at ffffffff8102e93b</div><div class="line"> #5 [ffff8800658c7cd0] do_trap at ffffffff8168c440</div><div class="line"> #6 [ffff8800658c7d20] do_divide_error at ffffffff8102af4e</div><div class="line"> #7 [ffff8800658c7dd0] divide_error at ffffffff81695cce</div><div class="line">    [exception RIP: tcp_select_initial_window+55]</div><div class="line">    RIP: ffffffff815c9e77  RSP: ffff8800658c7e80  RFLAGS: 00010246</div><div class="line">    RAX: 000000000000aaaa  RBX: 0000000000000000  RCX: 000000003fffc000</div><div class="line">    RDX: 0000000000000000  RSI: 0000000000000000  RDI: 000000000000aaaa</div><div class="line">    RBP: ffff8800658c7e88   R8: 0000000000000001   R9: ffff8800658c7eab</div><div class="line">    R10: ffff880138ea4e18  R12: ffff880138ea4eac  R12: ffff880135087c00</div><div class="line">    R13: 0000000000000000  R14: 00000000650cb5dc  R15: ffffffff81a97e40</div><div class="line">    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018</div><div class="line"> #8 [ffff8800658c7e90] do_tcp_setsockopt at ffffffff815be132</div><div class="line"> #9 [ffff8800658c7f18] tcp_setsockopt at ffffffff815be9b2</div><div class="line">#10 [ffff8800658c7f28] sock_common_setsockopt at ffffffff81554384</div><div class="line">#11 [ffff8800658c7f38] sys_setsockopt at ffffffff81553510</div><div class="line">#12 [ffff8800658c7f80] system_call_fastpath at ffffffff816944c9</div><div class="line">    RIP: 00007f0f4a248c0a  RSP: 00007f0ee3ffe188  RFLAGS: 00010202</div><div class="line">    RAX: 0000000000000036  RBX: ffffffff816944c9  RCX: 00007f0ee3ffe0b0</div><div class="line">    RDX: 0000000000000014  RSI: 0000000000000006  RDI: 000000000000005a</div><div class="line">    RBP: 00007f0ee3ffe180   R8: 0000000000000022   R9: 00007f0ee3ffe6ec</div><div class="line">    R10: 00007f0ee3ffe100  R11: 0000000000000246  R12: 00007f0f50490860</div><div class="line">    R13: 00007f0ee3ffe7f0  R14: 0000000000000000  R15: 000000000046a24a</div><div class="line">    ORIG_RAX: 0000000000000036  CS: 0033  SS: 002b</div></pre></td></tr></table></figure>
+<p>根据调用栈，锁定这是一段这样的代码导致（这段代码来自从老kernel上porting过来的一个功能patch）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"> 93 +   sync_mss = tcp_sync_mss(sk, dst_mtu(dst));</div><div class="line"> 94 +</div><div class="line"> 95 +   tp-&gt;window_clamp = dst_metric(dst, RTAX_WINDOW);</div><div class="line"> 96 +   tp-&gt;advmss = dst_metric(dst, RTAX_ADVMSS);</div><div class="line"> 97 +</div><div class="line"> 98 +   tcp_initialize_rcv_mss(sk);</div><div class="line"> 99 +   tcp_select_initial_window(tcp_full_space(sk),</div><div class="line">100 +                 tp-&gt;advmss - (tp-&gt;rx_opt.ts_recent_stamp ? tp-&gt;tcp_header_len - sizeof(struct tcphdr) : 0),</div><div class="line">101 +                 &amp;tp-&gt;rcv_wnd,</div><div class="line">102 +                 &amp;tp-&gt;window_clamp,</div><div class="line">104 +                 sysctl_tcp_window_scaling,</div><div class="line">104 +                 &amp;rcv_wscale, dst_metric(dst, RTAX_INITRWND));</div></pre></td></tr></table></figure>
+<p>由64位下参数调用的习惯，可以得知100行处tcp_select_initial_window的第二个参数mss值为0, 此参数会在tcp_select_initial_window中作为除数，从而引发一个除零异常。</p>
+<p>这时以前比较常用的做法是通过bt -lf打出栈内存，反汇编问题函数，然后通过推断得出各个变量的地址，然后根据类型去解相应的值，重建问题的现场。但这里的麻烦之处在于编译的优化常常会出来捣乱，让代码变得更加难读，更糟的情况是dump信息中有时并不能包含所有的内存地址，这会导致推理中断。</p>
+<p>所幸的是这个问题是可以重现的，因此一个比较直观的思路是可以打log出来看一下到底那些中间变量发生了什么，如果用修改代码来实施的话，每次想收集新的信息时就得重新编译，外加更换产品的内核，很麻烦。</p>
+<p>这时候SystemTap就显得非常好用，直接probe一下出问题点前的程序步，打印出相应的变量值就可以了。不过这里有个特殊的问题是这个bug的后果会导致kernel panic，因此现场信息无法及时的返回回来，所以用了个小trick，在99行调用前除了打印变量值外，把tp-&gt;advmss的值调大，这样就可以避过kernel panic，看到现场变量的值了。结果发现tp-&gt;advmess的值在函数调用时是0，tp-&gt;rx_opt.ts_recent_stamp也是0，根源在tp-&gt;advmss上。</p>
+<p>通过查看kernel 3.10的代码，发现dst_metric(dst, RTAX_ADVMSS)这种方式在新的kernel中已经不再工作了，新的取值方式是dst_metric_advmss(dst); 修改为新的方式，重新build kernel，问题解决。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://efunflying.github.io/2017/07/09/system-tap-kernel-update/" data-id="cj5b4qazn000d7qr9sugi90ix" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kernel/">kernel</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/07/17/algorith-reverse-matrix/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          一道矩阵转置的算法题
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/06/25/Machine-Learning-Start/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Machine Learning课程感想</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Algorithm/">Algorithm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/">TCP/IP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernel/">kernel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lwn-net/">lwn.net</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Algorithm/" style="font-size: 10px;">Algorithm</a> <a href="/tags/TCP-IP/" style="font-size: 10px;">TCP/IP</a> <a href="/tags/kernel/" style="font-size: 20px;">kernel</a> <a href="/tags/lwn-net/" style="font-size: 10px;">lwn.net</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2017/07/19/repair-tcp-connection/">(译)修复TCP连接</a>
+          </li>
+        
+          <li>
+            <a href="/2017/07/17/algorith-reverse-matrix/">一道矩阵转置的算法题</a>
+          </li>
+        
+          <li>
+            <a href="/2017/07/09/system-tap-kernel-update/">利用SystemTap辅助查找kernel panic的原因</a>
+          </li>
+        
+          <li>
+            <a href="/2017/06/25/Machine-Learning-Start/">Machine Learning课程感想</a>
+          </li>
+        
+          <li>
+            <a href="/2017/04/12/rpm-commands/">一些很有用的RPM命令的总结</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2017 Allen Fang<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">首页</a>
+  
+    <a href="/archives" class="mobile-nav-link">归档</a>
+  
+    <a href="/about" class="mobile-nav-link">关于</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">订阅</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
   </div>
 </body>
 </html>
