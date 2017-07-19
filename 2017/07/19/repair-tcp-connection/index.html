@@ -1,93 +1,327 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
+
+
+
   
-  <title>(译)修复TCP连接 | 迎风飞翔</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="这是2012年的一篇老文章了，最近在做产品kernel base upgrading的事，从2.6.32到3.10的迁移过程中，原来在kernel中实现man in middle支持的patch在porting到3.10后出了一点问题，为maninmid建立的新socket工作不正常，看起来和新的kernel改动有关。在排查问题的时候偶然发现了这篇文章，觉得有了TCP_REPAIR这种模式的支持，">
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="kernel,TCP/IP,lwn.net," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="这是2012年的一篇老文章了，最近在做产品kernel base upgrading的事，从2.6.32到3.10的迁移过程中，原来在kernel中实现man in middle支持的patch在porting到3.10后出了一点问题，为maninmid建立的新socket工作不正常，看起来和新的kernel改动有关。在排查问题的时候偶然发现了这篇文章，觉得有了TCP_REPAIR这种模式的支持，">
 <meta name="keywords" content="kernel,TCP&#x2F;IP,lwn.net">
 <meta property="og:type" content="article">
 <meta property="og:title" content="(译)修复TCP连接">
 <meta property="og:url" content="https://efunflying.github.io/2017/07/19/repair-tcp-connection/index.html">
 <meta property="og:site_name" content="迎风飞翔">
 <meta property="og:description" content="这是2012年的一篇老文章了，最近在做产品kernel base upgrading的事，从2.6.32到3.10的迁移过程中，原来在kernel中实现man in middle支持的patch在porting到3.10后出了一点问题，为maninmid建立的新socket工作不正常，看起来和新的kernel改动有关。在排查问题的时候偶然发现了这篇文章，觉得有了TCP_REPAIR这种模式的支持，">
-<meta property="og:updated_time" content="2017-07-19T14:48:35.000Z">
+<meta property="og:updated_time" content="2017-07-19T19:23:29.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="(译)修复TCP连接">
 <meta name="twitter:description" content="这是2012年的一篇老文章了，最近在做产品kernel base upgrading的事，从2.6.32到3.10的迁移过程中，原来在kernel中实现man in middle支持的patch在porting到3.10后出了一点问题，为maninmid建立的新socket工作不正常，看起来和新的kernel改动有关。在排查问题的时候偶然发现了这篇文章，觉得有了TCP_REPAIR这种模式的支持，">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="https://efunflying.github.io/2017/07/19/repair-tcp-connection/"/>
+
+
+
+
+
+  <title>(译)修复TCP连接 | 迎风飞翔</title>
   
-  
-    <link rel="icon" href="/favicon.png">
-  
-  
-    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
-  
-  <link rel="stylesheet" href="/css/style.css">
-  
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </head>
 
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">迎风飞翔</a>
-      </h1>
-      
-    </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">首页</a>
-        
-          <a class="main-nav-link" href="/archives">归档</a>
-        
-          <a class="main-nav-link" href="/about">关于</a>
-        
-          <a class="main-nav-link" href="/atom.xml">订阅</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://efunflying.github.io"></form>
-      </div>
-    </div>
-  </div>
-</header>
-      <div class="outer">
-        <section id="main"><article id="post-repair-tcp-connection" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2017/07/19/repair-tcp-connection/" class="article-date">
-  <time datetime="2017-07-19T14:07:04.000Z" itemprop="datePublished">2017-07-19</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
   
-    <h1 class="article-title" itemprop="name">
-      (译)修复TCP连接
-    </h1>
+  
+    
   
 
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">迎风飞翔</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/07/19/repair-tcp-connection/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allen Fang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="迎风飞翔">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">(译)修复TCP连接</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-19T22:07:04+08:00">
+                2017-07-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
       </header>
     
-    <div class="article-entry" itemprop="articleBody">
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
       
         <p>这是2012年的一篇老文章了，最近在做产品kernel base upgrading的事，从2.6.32到3.10的迁移过程中，原来在kernel中实现man in middle支持的patch在porting到3.10后出了一点问题，为maninmid建立的新socket工作不正常，看起来和新的kernel改动有关。在排查问题的时候偶然发现了这篇文章，觉得有了TCP_REPAIR这种模式的支持，原来的代码看起来可以实现得更加优雅，虽然不确定最终是否会采用这种方案，因为它会需要修改用户态daemon的实现，不知道领导是否有意见，但从技术上，觉得这是个好方向。</p>
-<p>================================译文分割线============================================</p>
+<p>=================================译文分割线==================================</p>
 <p>把一个正在运行的container从一台物理主机迁移到另一台物理主机是件在许多层面上都很tricky的事。尤其当container拥有许多与外部的active网络连接的时候，问题就变得更加困难。一个自然的想法是希望这些连接能够随着container迁移到新的物理主机上，而且最好远端都对此过程毫无察觉，不过Linux网络栈在编写是并没有考虑这样的移动的。即使这样，似乎随着Pavel Emelyanov的TCP connection repair patches，网络连接的transparent relocation，将在3.5版本的内核上得到支持。</p>
 <p>迁移TCP连接的第一步是收集该连接当前所有可能的信息。这些信息目前在用户态很多都能获取到。通过挖掘/proc和/sys，可以确定对端的地址和端口，发送和接收队列的大小，TCP的sequence number，以及两端协商而得到的一堆参数。当然仍然有一些参数是用户态获取不到的，所以为了完成这个任务，内核也需要提供一些额外的支持。</p>
 <p>对于拥有适当特权（CAP_NET_ADMIN）的进程，Pavel的patch提供了这样的支持。为了深入一个active的网络连接的内部，用户空间需要使用新引入的TCP_REPAIR选项，通过setsocketopt()系统调用，将相关的socket置于“修复模式(repair mode)”下，并且此时的socket必须处于关闭或者“established”状态下。一旦socket被置于修复模式，它就能以数种方式进行操控。</p>
@@ -101,6 +335,7 @@
 <p>一旦socket被恢复到了和其在旧主机上差不多的状态，就到了投入使用的时候了。当一个socket处于修复模式下时调用connect()，连接建立和协商的大部分代码会被跳过，连接会直接转到“established”状态，而不会与对端发生任何的实质通信。最后，当socket退出修复模式的时候，会发送一个window probe，以重启两端的traffic，此时socket可以在新的主机上继续正常的通信操作。</p>
 <p>这些patch在几个月里已经经过了一些修订，到version 4的时候，networking的maintainer David Miller已经把它们接受到了net-next中。因此，这些改动几乎肯定将被merge进3.5版中。TCP connection repair patch并没有提供container checkpointing和restoring问题的完整solution，不过它们是这个方向上的重要一步。</p>
 <p>以下是原文：</p>
+<blockquote>
 <h1 id="TCP-connection-repair"><a href="#TCP-connection-repair" class="headerlink" title="TCP connection repair"></a>TCP connection repair</h1><p> Migrating a running container from one physical host to another is a tricky job on a number of levels. Things get even harder if, as is likely, the container has active network connections to processes outside of that container. It is natural to want those connections to follow the container to its new host, preferably without the remote end even noticing that something has changed, but the Linux networking stack was not written with this kind of move in mind. Even so, it appears that transparent relocation of network connections, in the form of Pavel Emelyanov’s TCP connection repair patches, will be supported in the 3.5 kernel. </p>
 <p> The first step in moving a TCP connection is to gather all of the information possible about its current state. Much of that information is available from user space now; by digging around in /proc and /sys, one can determine the address and port of the remote end, the sizes of the send and receive queues, TCP sequence numbers, and a number of parameters negotiated between the two end points. There are still a few things that user space will need to obtain, though, before it can finish the job; that requires some additional support from the kernel. </p>
 <p> With Pavel’s patch, that support is available to suitably privileged processes. To dig into the internals of an active network connection, user space must put the associated socket into a new “repair mode.” That is done with the setsockopt() system call, using the new TCP_REPAIR option. Changing a process’s repair mode status requires the CAP_NET_ADMIN capability; the socket must also either be closed or in the “established” state. Once the socket is in repair mode, it can be manipulated in a number of ways.</p>
@@ -113,135 +348,356 @@
 <p> Another important task is to restore the send and receive sequence numbers. These numbers are normally generated randomly when the connection is established, but that cannot be done when a connection is being moved. These numbers can be set with yet another call to setsockopt(), this time with the TCP_QUEUE_SEQ option. This operation applies to whichever queue was previously selected with TCP_REPAIR_QUEUE, so the refilling of a queue’s content and the setting of its sequence number are best done at the same time.</p>
 <p> Once the socket has been restored to a state approximating that which existed on the old host, it’s time to put it into operation. Whenconnect() is called on a socket in repair mode, much of the current setup and negotiation code is shorted out; instead, the connection goes directly to the “established” state without any communication from the remote end. As a final step, when the socket is taken out of the repair mode, a window probe is sent to restart traffic between the two ends; at that point, the socket can resume normal operation on the new host.</p>
 <p> These patches have been through a few revisions over a number of months; with version 4, networking maintainer David Miller accepted them into net-next. From there, those changes will almost certainly hit the mainline during the 3.5 merge window. The TCP connection repair patches do not represent a complete solution to the problem of checkpointing and restoring containers, but they are an important step in that direction.</p>
+</blockquote>
 <p><a href="https://lwn.net/Articles/495304/" target="_blank" rel="external">https://lwn.net/Articles/495304/</a></p>
+<p><div id="container"></div></p>
+<p><link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css"></p>
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+  var gitment = new Gitment({
+    owner: 'efunflying',
+    repo: 'https://github.com/efunflying/comments.git',
+    oauth: {
+      id: 'repair-tcp-connection',
+      client_id: 'd4f8ceb2a0018f4659f4',
+      client_secret: 'f1b0d2899c3e538b720bd7ede322d15faca22e13',
+    },
+  })
+  gitment.render('container')
+</script>
 
       
     </div>
-    <footer class="article-footer">
-      <a data-url="https://efunflying.github.io/2017/07/19/repair-tcp-connection/" data-id="cj5b8wspq000543r95o2e61cd" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/TCP-IP/">TCP/IP</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/kernel/">kernel</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/lwn-net/">lwn.net</a></li></ul>
 
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/kernel/" rel="tag"># kernel</a>
+          
+            <a href="/tags/TCP-IP/" rel="tag"># TCP/IP</a>
+          
+            <a href="/tags/lwn-net/" rel="tag"># lwn.net</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/17/algorith-reverse-matrix/" rel="next" title="一道矩阵转置的算法题">
+                <i class="fa fa-chevron-left"></i> 一道矩阵转置的算法题
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
     </footer>
-  </div>
-  
-    
-<nav id="article-nav">
-  
-  
-    <a href="/2017/07/17/algorith-reverse-matrix/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">一道矩阵转置的算法题</div>
-    </a>
-  
-</nav>
+  </article>
 
-  
-</article>
 
-</section>
-        
-          <aside id="sidebar">
-  
-    
 
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">标签</h3>
-    <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Algorithm/">Algorithm</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/">TCP/IP</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernel/">kernel</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lwn-net/">lwn.net</a></li></ul>
+    <div class="post-spread">
+      
     </div>
   </div>
 
 
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">标签云</h3>
-    <div class="widget tagcloud">
-      <a href="/tags/Algorithm/" style="font-size: 10px;">Algorithm</a> <a href="/tags/TCP-IP/" style="font-size: 10px;">TCP/IP</a> <a href="/tags/kernel/" style="font-size: 20px;">kernel</a> <a href="/tags/lwn-net/" style="font-size: 10px;">lwn.net</a>
-    </div>
-  </div>
+          </div>
+          
 
-  
+
+          
+  <div class="comments" id="comments">
     
-  <div class="widget-wrap">
-    <h3 class="widget-title">归档</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a></li></ul>
-    </div>
   </div>
 
 
+        </div>
+        
+          
   
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">最新文章</h3>
-    <div class="widget">
-      <ul>
-        
-          <li>
-            <a href="/2017/07/19/repair-tcp-connection/">(译)修复TCP连接</a>
-          </li>
-        
-          <li>
-            <a href="/2017/07/17/algorith-reverse-matrix/">一道矩阵转置的算法题</a>
-          </li>
-        
-          <li>
-            <a href="/2017/07/09/system-tap-kernel-update/">利用SystemTap辅助查找kernel panic的原因</a>
-          </li>
-        
-          <li>
-            <a href="/2017/06/25/Machine-Learning-Start/">Machine Learning课程感想</a>
-          </li>
-        
-          <li>
-            <a href="/2017/04/12/rpm-commands/">一些很有用的RPM命令的总结</a>
-          </li>
-        
-      </ul>
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
     </div>
   </div>
 
-  
-</aside>
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="Allen Fang" />
+          <p class="site-author-name" itemprop="name">Allen Fang</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives/">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#TCP-connection-repair"><span class="nav-number">1.</span> <span class="nav-text">TCP connection repair</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
         
       </div>
-      <footer id="footer">
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
   
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      &copy; 2017 Allen Fang<br>
-      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
-    </div>
-  </div>
-</footer>
-    </div>
-    <nav id="mobile-nav">
-  
-    <a href="/" class="mobile-nav-link">首页</a>
-  
-    <a href="/archives" class="mobile-nav-link">归档</a>
-  
-    <a href="/about" class="mobile-nav-link">关于</a>
-  
-    <a href="/atom.xml" class="mobile-nav-link">订阅</a>
-  
-</nav>
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Allen Fang</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
     
 
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-
-
-  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
-  <script src="/fancybox/jquery.fancybox.pack.js"></script>
-
-
-<script src="/js/script.js"></script>
-
   </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
 </body>
 </html>
