@@ -93,16 +93,12 @@
 
 
 
-<meta name="description" content="最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。 简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来t">
-<meta property="og:type" content="article">
-<meta property="og:title" content="一些很有用的RPM命令的总结">
-<meta property="og:url" content="https://efunflying.github.io/2017/04/12/rpm-commands/index.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="迎风飞翔">
+<meta property="og:url" content="https://efunflying.github.io/archives/2017/index.html">
 <meta property="og:site_name" content="迎风飞翔">
-<meta property="og:description" content="最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。 简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来t">
-<meta property="og:updated_time" content="2017-07-02T05:49:59.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="一些很有用的RPM命令的总结">
-<meta name="twitter:description" content="最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。 简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来t">
+<meta name="twitter:title" content="迎风飞翔">
 
 
 
@@ -130,13 +126,13 @@
 
 
 
-  <link rel="canonical" href="https://efunflying.github.io/2017/04/12/rpm-commands/"/>
+  <link rel="canonical" href="https://efunflying.github.io/archives/2017/"/>
 
 
 
 
 
-  <title>一些很有用的RPM命令的总结 | 迎风飞翔</title>
+  <title>归档 | 迎风飞翔</title>
   
 
 
@@ -161,7 +157,7 @@
     
   
 
-  <div class="container sidebar-position-left page-post-detail ">
+  <div class="container sidebar-position-left  page-archive  ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -245,156 +241,251 @@
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-expand">
-    
+  <section id="posts" class="posts-collapse">
+    <span class="archive-move-on"></span>
 
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/04/12/rpm-commands/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Allen Fang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="迎风飞翔">
+    <span class="archive-page-counter">
+      
+      
+      
+        
+      
+      嗯..! 目前共计 7 篇日志。 继续努力。
     </span>
 
     
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">一些很有用的RPM命令的总结</h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-12T13:36:05+08:00">
-                2017-04-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    <div class="post-body" itemprop="articleBody">
 
       
       
-
       
-        <p>最近做一个项目，目标是把产品定制操作系统的kernel base从CentOS 6的2.6.32升级到CentOS 7的3.10，同时升级操作系统编译平台，使其可以编译出新的定制kernel包。同时希望维持产品其余部分的稳定。</p>
-<p>简言之是希望把CentOS 7的kernel包加上定制patch后装到CentOS 6上，这是一个并没有官方guide的task，由于kernel的升级，不可避免的会带来toolchain的升级需求，因此在很多时候，是需要解决在过程中的包依赖（包括版本依赖）的，也就不可避免的要做一些包的backport，以使新kernel的rpm包依赖的一些rpm包能运行在CentOS 6下。</p>
-<p>在这个过程中，一些命令发现被用到的频率非常高，所以在这里整理一下。</p>
-<ol>
-<li>rpm -qpl xxxxx.rpm     有时候下了一个包，你想知道这个包里有哪些文件，将来会被放到什么目录下，这个命令很有用</li>
-<li>rpm -qf /path/to/file  有时候提示你CentOS 6下缺了某个文件，你想知道这个文件应该去CentOS 7下的哪个包里找，可以在CentOS 7下用whereis找到该文件，然后用这个命令查出属于哪个包</li>
-<li>rpm2cpio xxxxx.rpm | cpio -dim  当你想查看一下rpm包内的某个文件，但却并不想安装它的时候，把它解开来是个比较简单的方法</li>
-<li>rpm -qp –scripts xxxx.rpm 当你想查看一下某个rpm包在安装前后会执行哪些操作时，可以用这个命令来看，在安装过程（rpm -i）中加-vv参数可以观察这些脚本的执行情况。</li>
-<li>rpm -qpR xxxxx.rpm     有时候你想提前知道某个包依赖哪些包，可以通过这个命令查看</li>
-<li>rpm -q –whatrequires xxxx  查看某包被哪些包依赖</li>
-</ol>
 
-      
-    </div>
-
-    <div>
       
         
-
-      
-    </div>
-
-    <div>
-      
-        
-
-      
-    </div>
-
-    <div>
-      
-        
-
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-      
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2015/08/22/2015-08-22-hello-world/" rel="next" title="Hello World">
-                <i class="fa fa-chevron-left"></i> Hello World
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/06/25/Machine-Learning-Start/" rel="prev" title="Machine Learning课程感想">
-                Machine Learning课程感想 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
+        <div class="collection-title">
+          <h2 class="archive-year motion-element" id="archive-year-2017">2017</h2>
         </div>
       
+      
 
       
-      
-    </footer>
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/07/30/ip-early-demux/" itemprop="url">
+              
+                <span itemprop="name">ip_early_demux魅影</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-07-30T16:52:58+08:00"
+              content="2017-07-30" >
+          07-30
+        </time>
+      </div>
+
+    </header>
   </article>
 
 
 
-    <div class="post-spread">
+    
+
       
-    </div>
-  </div>
+      
+      
+
+      
+      
+
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/07/19/repair-tcp-connection/" itemprop="url">
+              
+                <span itemprop="name">(译)修复TCP连接</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-07-19T22:07:04+08:00"
+              content="2017-07-19" >
+          07-19
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+
+    
+
+      
+      
+      
+
+      
+      
+
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/07/17/algorith-reverse-matrix/" itemprop="url">
+              
+                <span itemprop="name">一道矩阵转置的算法题</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-07-17T23:45:57+08:00"
+              content="2017-07-17" >
+          07-17
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+
+    
+
+      
+      
+      
+
+      
+      
+
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/07/09/system-tap-kernel-update/" itemprop="url">
+              
+                <span itemprop="name">利用SystemTap辅助查找kernel panic的原因</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-07-09T20:42:55+08:00"
+              content="2017-07-09" >
+          07-09
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+
+    
+
+      
+      
+      
+
+      
+      
+
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/06/25/Machine-Learning-Start/" itemprop="url">
+              
+                <span itemprop="name">Machine Learning课程感想</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-06-25T12:57:01+08:00"
+              content="2017-06-25" >
+          06-25
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+
+    
+
+      
+      
+      
+
+      
+      
+
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/04/12/rpm-commands/" itemprop="url">
+              
+                <span itemprop="name">一些很有用的RPM命令的总结</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-04-12T13:36:05+08:00"
+              content="2017-04-12" >
+          04-12
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+
+    
+
+  </section>
+
+  
+
 
 
           </div>
@@ -402,10 +493,6 @@
 
 
           
-  <div class="comments" id="comments">
-    
-  </div>
-
 
         </div>
         
@@ -600,9 +687,11 @@
 
 
   
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
-
+  
+    <script type="text/javascript" id="motion.page.archive">
+      $('.archive-year').velocity('transition.slideLeftIn');
+    </script>
+  
 
 
   
