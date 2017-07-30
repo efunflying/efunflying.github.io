@@ -77,7 +77,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="kernel,TCP/IP," />
 
 
 
@@ -95,16 +95,17 @@
 
 
 
-<meta name="description" content="最近机器学习真是火，百年难得一见的创始人，为此竟然跑出来给大家做了次sharing，虽然内容还是很general，但是从创始人的口中了解到现在在硅谷，AI方面的购并正在大规模的发生，各大公司正在摩拳擦掌准备抢占新时代的主导权，或者至少，为应对新一轮的“洗牌”积蓄力量，以免自己成为被新浪潮抛弃掉的那一批。 有鉴于IT行业从来不缺乏炒概念，讲故事的热情和能力，因此对这次的AI风潮，一直也都是抱着隔岸观">
+<meta name="description" content="上周终于把maninmid的事搞定了，其实回头来说，关于最关键的问题，很早就已经想到最后的那个方向了。但由于用户态daemon打印的log产生了误导，然后加上porting过程当中本来也产生了一些其他的疏漏，结果最后差不多把TCP/IP协议栈过了一遍，顺便修了几个porting的问题，确认了其他部分没问题之后，才重新回到了最初怀疑的方向，可谓一波三折。 我们实现maninmid的思路和tproxy">
+<meta name="keywords" content="kernel,TCP&#x2F;IP">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Machine Learning课程感想">
-<meta property="og:url" content="https://efunflying.github.io/2017/06/25/Machine-Learning-Start/index.html">
+<meta property="og:title" content="ip_early_demux魅影">
+<meta property="og:url" content="https://efunflying.github.io/2017/07/30/ip-early-demux/index.html">
 <meta property="og:site_name" content="迎风飞翔">
-<meta property="og:description" content="最近机器学习真是火，百年难得一见的创始人，为此竟然跑出来给大家做了次sharing，虽然内容还是很general，但是从创始人的口中了解到现在在硅谷，AI方面的购并正在大规模的发生，各大公司正在摩拳擦掌准备抢占新时代的主导权，或者至少，为应对新一轮的“洗牌”积蓄力量，以免自己成为被新浪潮抛弃掉的那一批。 有鉴于IT行业从来不缺乏炒概念，讲故事的热情和能力，因此对这次的AI风潮，一直也都是抱着隔岸观">
-<meta property="og:updated_time" content="2017-06-30T07:00:38.000Z">
+<meta property="og:description" content="上周终于把maninmid的事搞定了，其实回头来说，关于最关键的问题，很早就已经想到最后的那个方向了。但由于用户态daemon打印的log产生了误导，然后加上porting过程当中本来也产生了一些其他的疏漏，结果最后差不多把TCP/IP协议栈过了一遍，顺便修了几个porting的问题，确认了其他部分没问题之后，才重新回到了最初怀疑的方向，可谓一波三折。 我们实现maninmid的思路和tproxy">
+<meta property="og:updated_time" content="2017-07-30T11:43:51.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Machine Learning课程感想">
-<meta name="twitter:description" content="最近机器学习真是火，百年难得一见的创始人，为此竟然跑出来给大家做了次sharing，虽然内容还是很general，但是从创始人的口中了解到现在在硅谷，AI方面的购并正在大规模的发生，各大公司正在摩拳擦掌准备抢占新时代的主导权，或者至少，为应对新一轮的“洗牌”积蓄力量，以免自己成为被新浪潮抛弃掉的那一批。 有鉴于IT行业从来不缺乏炒概念，讲故事的热情和能力，因此对这次的AI风潮，一直也都是抱着隔岸观">
+<meta name="twitter:title" content="ip_early_demux魅影">
+<meta name="twitter:description" content="上周终于把maninmid的事搞定了，其实回头来说，关于最关键的问题，很早就已经想到最后的那个方向了。但由于用户态daemon打印的log产生了误导，然后加上porting过程当中本来也产生了一些其他的疏漏，结果最后差不多把TCP/IP协议栈过了一遍，顺便修了几个porting的问题，确认了其他部分没问题之后，才重新回到了最初怀疑的方向，可谓一波三折。 我们实现maninmid的思路和tproxy">
 
 
 
@@ -132,13 +133,13 @@
 
 
 
-  <link rel="canonical" href="https://efunflying.github.io/2017/06/25/Machine-Learning-Start/"/>
+  <link rel="canonical" href="https://efunflying.github.io/2017/07/30/ip-early-demux/"/>
 
 
 
 
 
-  <title>Machine Learning课程感想 | 迎风飞翔</title>
+  <title>ip_early_demux魅影 | 迎风飞翔</title>
   
 
 
@@ -257,7 +258,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/06/25/Machine-Learning-Start/">
+    <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/07/30/ip-early-demux/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Allen Fang">
@@ -274,7 +275,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Machine Learning课程感想</h1>
+          <h1 class="post-title" itemprop="name headline">ip_early_demux魅影</h1>
         
 
         <div class="post-meta">
@@ -286,8 +287,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-06-25T12:57:01+08:00">
-                2017-06-25
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-30T16:52:58+08:00">
+                2017-07-30
               </time>
             
 
@@ -321,12 +322,21 @@
       
 
       
-        <p>最近机器学习真是火，百年难得一见的创始人，为此竟然跑出来给大家做了次sharing，虽然内容还是很general，但是从创始人的口中了解到现在在硅谷，AI方面的购并正在大规模的发生，各大公司正在摩拳擦掌准备抢占新时代的主导权，或者至少，为应对新一轮的“洗牌”积蓄力量，以免自己成为被新浪潮抛弃掉的那一批。</p>
-<p>有鉴于IT行业从来不缺乏炒概念，讲故事的热情和能力，因此对这次的AI风潮，一直也都是抱着隔岸观火的态度。毕竟根据在学校里那会儿数据挖掘课上得到的印象，机器学习还只是基于算法的一种辅助寻找大数据中有用信息和规律的手段而已，能力受限于设计者对问题的认识比较多，完全谈不上什么超越人类，取代人类。即使是Alpha Go的神奇，初看起来也只是由于剪枝做得比较好，节省了许多原本不必要的计算，外加加入了形势判断的算法，能去计算落子的效率和优劣而已。</p>
-<p>不过另一方面也深知，要客观评价一个东西，得先足够了解它才行，记得上学那会儿数据挖掘课上提到神经网络的时候，只是简单的讲了一下，印象最深的还是Minsky大神在他的那本《感知机》的书中对于神经网络的数学论证，导致神经网络研究直接进入寒冬的掌故，神经网络的课也主要讲的是BP神经网络，还讲到了SVM，那个又一次把神经网络研究打入冷宫的算法，但之于当红的Deep Learning，那会儿是没有讲到的。所以正好公司内部有这样的课程就报名参加了。</p>
-<p>听了几堂课下来，前面的基础知识的内容和研究生时期的课差不多，不过由于是公司的课，更偏工程方向。后面讲到深度学习的时候，才了解到目前这个方向更类似于实验科学，大家对这项技术的热衷源于它的实际效果很好，并且通过增加神经网络的深度，调试激活函数，还能取得更好的效果，并且与现有的其他模型不同，深度学习目前并没有表现出传统机器学习算法那样随着数据的增加效用逐渐趋平的天花板效应。课间和讲师同事闲聊的时候，他也坦言，现在的这个方向，理论严重滞后于实践，大家的工作更像是炼金术士，追求的是怎样可以取得更好的效果，但是对于为什么这样那样效果更好，或者是不是总是会那么好，其实大家都不清楚。</p>
-<p>而这一点倒是让我感到很惊艳，因为这像极了许多科学理论大发展前的实践积累阶段，而历史也反复证明，一旦进入理论化的阶段，其发展可能是爆炸式的。而且这一次有意思的地方在于，由于神经网络最初是模拟人脑神经元的工作方式而诞生的，那么将来这方面一旦理论化，也许也意味着我们能找到对人意识思维本质这一问题的答案，并且从这个意义上讲，一旦那一天到来，机器由于其永生，外加算力强大，超越人类简直易如反掌。这也让我第一次感到人工智能也许真在某个时间点后，将完全脱离人的掌握而独立存在这种可能的现实性。</p>
-<p>炼金到化学的跨越，也许也是人到神的跨越。</p>
+        <p>上周终于把maninmid的事搞定了，其实回头来说，关于最关键的问题，很早就已经想到最后的那个方向了。但由于用户态daemon打印的log产生了误导，然后加上porting过程当中本来也产生了一些其他的疏漏，结果最后差不多把TCP/IP协议栈过了一遍，顺便修了几个porting的问题，确认了其他部分没问题之后，才重新回到了最初怀疑的方向，可谓一波三折。</p>
+<p>我们实现maninmid的思路和tproxy很类似，也是利用connection track来管理session的mark，然后根据包的mark来确定其路由策略，不过由于我们对kernel进行了一些hack，这让我们做maninmid的时机时机和策略比使用iptables+tproxy更灵活，针对性也更精准，可以在我们在识别到某个特定的traffic类型的时候，在会话的中途注入进去。</p>
+<p>不过这次在从2.6.32 porting到3.10的时候，这个patch的正常运行出了问题，在排除了所有poritng过程中的疏漏后，man in middle依然不工作。</p>
+<p>一个奇怪的现象是，根据man in middle的逻辑，我们修改了ip_route_input_slow，所有打上了mark的包在做路由前，都会被我们添加于此的逻辑直接导向local in，转去ip_local_deliver处理，但是实际的情况，根据systemtap的显示，有相当一部分的包进入了forwarding chain，也就是去了ip_forward，这让人非常费解。这些被打上了标记的包，最终由netfilter queue导到用户态daemon，被我们认为是异常包丢弃了。同时期的抓包发现，一方面，客户端在某个阶段后，对于server(由于是man in middle，所以这个server其实是我们)发来的某个包不断的重发ACK，另一方面，我们却好像没有收到这些ack包一样，对于之前的那个包也在反复重传。看起来，那些进入forwarding chain被丢掉的包，和client端发送的那些ACK包很像是同一批的包。</p>
+<p>那么那些包怎么会跑到了forwarding chain上去了呢，经过代码追踪，最终怀疑到了input_rcv_finish函数中引用的一个名为sysctl_ip_early_demux的变量，由于这个名字看起来是可以通过sysctl干预的，在/proc目录下一查，果然存在这么个文件/proc/sys/net/ipv4/ip_early_demux，并且值为1，将其改为0后，man in middle的逻辑终于正常了。</p>
+<p>那么这个ip_early_demux到底是个什么参数呢，根据kernel document里的描述，</p>
+<blockquote>
+<p>ip_early_demux - BOOLEAN<br>    Optimize input packet processing down to one demux for<br>    certain kinds of local sockets.  Currently we only do this<br>    for established TCP and connected UDP sockets.</p>
+<pre><code>It may add an additional cost for pure routing workloads that
+reduces overall throughput, in such case you should disable it.
+Default: 1
+</code></pre><p>其实现大体就是在socket(sock)里缓存了路由的结果(dst)，一个包到达的时候，先去找这个包有没有对应的socket，如果有的话，看看socket里的dst存不存在，如果存在的话就直接给置了包对应的input函数ip_forward，并且由此绕过了后面的路由代码(因为不需要了)。</p>
+</blockquote>
+<p>这样一来就好解释了，由于我们是在中途inject进去的，所以建立socket的时候，缓存的路由依然是做转发的，因此在这之后，对于客户端发来的ack包，由于一开始就查到了socket中dst_entry，所以就绕开了路由的代码，也就绕开了我们将它们直接转向本地的代码，而去了缓存下来的转发流程，由于在prerouting的时候被打上了mark，所以他们在之后被当做不该出现的包被丢掉了。所以作为上层的socket来说，始终收不到客户端发来的ack包，所以就不断重发，而客户端也因此不断的继续回ack包，知道最终上层超时，连接失败。</p>
+<p>由于如文档所说，这个属性因为上来不管包是不是到本地都会去查找相应的socket，因此对于转发为主的网络设备其实是不利(大多数情况下会失败，类似分支预测失误)的，所以最终方案打算直接禁掉这个功能。</p>
 
       
     </div>
@@ -354,6 +364,14 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/kernel/" rel="tag"># kernel</a>
+          
+            <a href="/tags/TCP-IP/" rel="tag"># TCP/IP</a>
+          
+        </div>
+      
 
       
       
@@ -363,8 +381,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/04/12/rpm-commands/" rel="next" title="一些很有用的RPM命令的总结">
-                <i class="fa fa-chevron-left"></i> 一些很有用的RPM命令的总结
+              <a href="/2017/07/19/repair-tcp-connection/" rel="next" title="(译)修复TCP连接">
+                <i class="fa fa-chevron-left"></i> (译)修复TCP连接
               </a>
             
           </div>
@@ -372,10 +390,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/07/09/system-tap-kernel-update/" rel="prev" title="利用SystemTap辅助查找kernel panic的原因">
-                利用SystemTap辅助查找kernel panic的原因 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
