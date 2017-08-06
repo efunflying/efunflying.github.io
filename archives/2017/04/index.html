@@ -77,7 +77,7 @@
 <link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="linux,shell," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -93,17 +93,12 @@
 
 
 
-<meta name="description" content="paste + 进程替换当你想要把几个命令的输出结果合并起来，作为后面命令的输入时，会需要这个命令。e.g. 查找当前目录下所有的c，h以及cpp文件，并传给calltree当参数paste &amp;lt;(find . -name “.[ch]”) &amp;lt;(find . -name “.cpp”) | xargs calltree -bg list=”func”注1：&amp;lt;与圆括号之间没有空格注">
-<meta name="keywords" content="linux,shell">
-<meta property="og:type" content="article">
-<meta property="og:title" content="一些不常用，但关键时候很有用的Linux命令知识">
-<meta property="og:url" content="https://efunflying.github.io/2017/07/31/linux-command-collection/index.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="迎风飞翔">
+<meta property="og:url" content="https://efunflying.github.io/archives/2017/04/index.html">
 <meta property="og:site_name" content="迎风飞翔">
-<meta property="og:description" content="paste + 进程替换当你想要把几个命令的输出结果合并起来，作为后面命令的输入时，会需要这个命令。e.g. 查找当前目录下所有的c，h以及cpp文件，并传给calltree当参数paste &amp;lt;(find . -name “.[ch]”) &amp;lt;(find . -name “.cpp”) | xargs calltree -bg list=”func”注1：&amp;lt;与圆括号之间没有空格注">
-<meta property="og:updated_time" content="2017-08-06T14:00:33.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="一些不常用，但关键时候很有用的Linux命令知识">
-<meta name="twitter:description" content="paste + 进程替换当你想要把几个命令的输出结果合并起来，作为后面命令的输入时，会需要这个命令。e.g. 查找当前目录下所有的c，h以及cpp文件，并传给calltree当参数paste &amp;lt;(find . -name “.[ch]”) &amp;lt;(find . -name “.cpp”) | xargs calltree -bg list=”func”注1：&amp;lt;与圆括号之间没有空格注">
+<meta name="twitter:title" content="迎风飞翔">
 
 
 
@@ -131,13 +126,13 @@
 
 
 
-  <link rel="canonical" href="https://efunflying.github.io/2017/07/31/linux-command-collection/"/>
+  <link rel="canonical" href="https://efunflying.github.io/archives/2017/04/"/>
 
 
 
 
 
-  <title>一些不常用，但关键时候很有用的Linux命令知识 | 迎风飞翔</title>
+  <title>归档 | 迎风飞翔</title>
   
 
 
@@ -162,7 +157,7 @@
     
   
 
-  <div class="container sidebar-position-left page-post-detail ">
+  <div class="container sidebar-position-left  page-archive  ">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -246,157 +241,66 @@
           <div id="content" class="content">
             
 
-  <div id="posts" class="posts-expand">
-    
+  <section id="posts" class="posts-collapse">
+    <span class="archive-move-on"></span>
 
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/07/31/linux-command-collection/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Allen Fang">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="迎风飞翔">
+    <span class="archive-page-counter">
+      
+      
+      
+        
+      
+      嗯..! 目前共计 8 篇日志。 继续努力。
     </span>
 
     
-      <header class="post-header">
 
-        
-        
-          <h1 class="post-title" itemprop="name headline">一些不常用，但关键时候很有用的Linux命令知识</h1>
-        
+      
+      
+      
 
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
+      
+        
+        <div class="collection-title">
+          <h2 class="archive-year motion-element" id="archive-year-2017">2017</h2>
+        </div>
+      
+      
+
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/04/12/rpm-commands/" itemprop="url">
               
-                <span class="post-meta-item-text">发表于</span>
+                <span itemprop="name">一些很有用的RPM命令的总结</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-31T01:33:01+08:00">
-                2017-07-31
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        <ol>
-<li><p>paste + 进程替换<br>当你想要把几个命令的输出结果合并起来，作为后面命令的输入时，会需要这个命令。<br>e.g. 查找当前目录下所有的c，h以及cpp文件，并传给calltree当参数<br>paste &lt;(find . -name “<em>.[ch]”) &lt;(find . -name “</em>.cpp”) | xargs calltree -bg list=”func”<br>注1：&lt;与圆括号之间没有空格<br>注2：xargs cmd与xargs -I”{}” cmd {}的区别在于xargs默认会把输入的换行符换成空格，命令执行一次，参数是所有的输入内容用空格隔开，而-I参数则是用输入的内容做替换，但同时并不会把输入中的换行换成空格，即同一个命令执行多次，每次用一行的参数<br>注3：实践证明calltree是个坑，久未更新，一些结果已经很不准确，cflow看起来不错，有不断的维护，ascii图适合简单的写文章场景，结合吴章京同学的脚本，可以转成dot文件供graphviz生成图片文件。</p>
-</li>
-<li><p>上传某个文件到ftp（改变命令序列可实现不同功能）</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">cd /PATH_YOU_WANT_TO_UPLOAD(DOWNLOAD)  </div><div class="line">ftp -niv &lt;&lt;- EOF  </div><div class="line">open IP_ADDRESS  </div><div class="line">user USERNAME PASSWORD  </div><div class="line">ascii(or bin)  </div><div class="line">put *(or get)  </div><div class="line">bye  </div><div class="line">EOF</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>注：关于ftp -niv &lt;&lt;- EOF<br>由于是脚本，因此我们要给此FTP脚本定义一个结束的符号，在这里，定义的结束符是“EOF”。你也可以自己来定义其他的。不过建议用“EOF”，这在绝大多数编程语言中，都表示结束：End Of File。<br>-v：显示远程服务器的所有响应信息；<br>-n：限制FTP的自动登录，即不使用；<br>-i：关闭多个文件传输时的交互过程；</p>
-
-      
-    </div>
-
-    <div>
-      
+            </a>
         
+      </h2>
 
-      
-    </div>
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-04-12T13:36:05+08:00"
+              content="2017-04-12" >
+          04-12
+        </time>
+      </div>
 
-    <div>
-      
-        
-
-      
-    </div>
-
-    <div>
-      
-        
-
-      
-    </div>
-
-    <footer class="post-footer">
-      
-        <div class="post-tags">
-          
-            <a href="/tags/linux/" rel="tag"># linux</a>
-          
-            <a href="/tags/shell/" rel="tag"># shell</a>
-          
-        </div>
-      
-
-      
-      
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2017/07/30/ip-early-demux/" rel="next" title="ip_early_demux魅影">
-                <i class="fa fa-chevron-left"></i> ip_early_demux魅影
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-          </div>
-        </div>
-      
-
-      
-      
-    </footer>
+    </header>
   </article>
 
 
 
-    <div class="post-spread">
-      
-    </div>
-  </div>
+    
+
+  </section>
+
+  
+
 
 
           </div>
@@ -404,10 +308,6 @@
 
 
           
-  <div class="comments" id="comments">
-    
-  </div>
-
 
         </div>
         
@@ -602,9 +502,11 @@
 
 
   
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.1"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.1"></script>
-
+  
+    <script type="text/javascript" id="motion.page.archive">
+      $('.archive-year').velocity('transition.slideLeftIn');
+    </script>
+  
 
 
   
