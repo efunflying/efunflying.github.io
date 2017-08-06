@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://efunflying.github.io/"/>
-  <updated>2017-07-30T11:43:51.000Z</updated>
+  <updated>2017-08-06T14:00:33.000Z</updated>
   <id>https://efunflying.github.io/</id>
   
   <author>
@@ -16,11 +16,42 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>一些不常用，但关键时候很有用的Linux命令知识</title>
+    <link href="https://efunflying.github.io/2017/07/31/linux-command-collection/"/>
+    <id>https://efunflying.github.io/2017/07/31/linux-command-collection/</id>
+    <published>2017-07-30T17:33:01.000Z</published>
+    <updated>2017-08-06T14:00:33.000Z</updated>
+    
+    <content type="html"><![CDATA[<ol>
+<li><p>paste + 进程替换<br>当你想要把几个命令的输出结果合并起来，作为后面命令的输入时，会需要这个命令。<br>e.g. 查找当前目录下所有的c，h以及cpp文件，并传给calltree当参数<br>paste &lt;(find . -name “<em>.[ch]”) &lt;(find . -name “</em>.cpp”) | xargs calltree -bg list=”func”<br>注1：&lt;与圆括号之间没有空格<br>注2：xargs cmd与xargs -I”{}” cmd {}的区别在于xargs默认会把输入的换行符换成空格，命令执行一次，参数是所有的输入内容用空格隔开，而-I参数则是用输入的内容做替换，但同时并不会把输入中的换行换成空格，即同一个命令执行多次，每次用一行的参数<br>注3：实践证明calltree是个坑，久未更新，一些结果已经很不准确，cflow看起来不错，有不断的维护，ascii图适合简单的写文章场景，结合吴章京同学的脚本，可以转成dot文件供graphviz生成图片文件。</p>
+</li>
+<li><p>上传某个文件到ftp（改变命令序列可实现不同功能）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">cd /PATH_YOU_WANT_TO_UPLOAD(DOWNLOAD)  </div><div class="line">ftp -niv &lt;&lt;- EOF  </div><div class="line">open IP_ADDRESS  </div><div class="line">user USERNAME PASSWORD  </div><div class="line">ascii(or bin)  </div><div class="line">put *(or get)  </div><div class="line">bye  </div><div class="line">EOF</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>注：关于ftp -niv &lt;&lt;- EOF<br>由于是脚本，因此我们要给此FTP脚本定义一个结束的符号，在这里，定义的结束符是“EOF”。你也可以自己来定义其他的。不过建议用“EOF”，这在绝大多数编程语言中，都表示结束：End Of File。<br>-v：显示远程服务器的所有响应信息；<br>-n：限制FTP的自动登录，即不使用；<br>-i：关闭多个文件传输时的交互过程；</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;ol&gt;
+&lt;li&gt;&lt;p&gt;paste + 进程替换&lt;br&gt;当你想要把几个命令的输出结果合并起来，作为后面命令的输入时，会需要这个命令。&lt;br&gt;e.g. 查找当前目录下所有的c，h以及cpp文件，并传给calltree当参数&lt;br&gt;paste &amp;lt;(find . -name “&lt;
+    
+    </summary>
+    
+    
+      <category term="linux" scheme="https://efunflying.github.io/tags/linux/"/>
+    
+      <category term="shell" scheme="https://efunflying.github.io/tags/shell/"/>
+    
+  </entry>
+  
+  <entry>
     <title>ip_early_demux魅影</title>
     <link href="https://efunflying.github.io/2017/07/30/ip-early-demux/"/>
     <id>https://efunflying.github.io/2017/07/30/ip-early-demux/</id>
     <published>2017-07-30T08:52:58.000Z</published>
-    <updated>2017-07-30T11:43:51.000Z</updated>
+    <updated>2017-07-30T13:00:39.000Z</updated>
     
     <content type="html"><![CDATA[<p>上周终于把maninmid的事搞定了，其实回头来说，关于最关键的问题，很早就已经想到最后的那个方向了。但由于用户态daemon打印的log产生了误导，然后加上porting过程当中本来也产生了一些其他的疏漏，结果最后差不多把TCP/IP协议栈过了一遍，顺便修了几个porting的问题，确认了其他部分没问题之后，才重新回到了最初怀疑的方向，可谓一波三折。</p>
 <p>我们实现maninmid的思路和tproxy很类似，也是利用connection track来管理session的mark，然后根据包的mark来确定其路由策略，不过由于我们对kernel进行了一些hack，这让我们做maninmid的时机时机和策略比使用iptables+tproxy更灵活，针对性也更精准，可以在我们在识别到某个特定的traffic类型的时候，在会话的中途注入进去。</p>
@@ -29,12 +60,16 @@
 <p>那么那些包怎么会跑到了forwarding chain上去了呢，经过代码追踪，最终怀疑到了input_rcv_finish函数中引用的一个名为sysctl_ip_early_demux的变量，由于这个名字看起来是可以通过sysctl干预的，在/proc目录下一查，果然存在这么个文件/proc/sys/net/ipv4/ip_early_demux，并且值为1，将其改为0后，man in middle的逻辑终于正常了。</p>
 <p>那么这个ip_early_demux到底是个什么参数呢，根据kernel document里的描述，</p>
 <blockquote>
-<p>ip_early_demux - BOOLEAN<br>    Optimize input packet processing down to one demux for<br>    certain kinds of local sockets.  Currently we only do this<br>    for established TCP and connected UDP sockets.</p>
-<pre><code>It may add an additional cost for pure routing workloads that
+<p>ip_early_demux - BOOLEAN</p>
+<pre><code>Optimize input packet processing down to one demux for
+certain kinds of local sockets.  Currently we only do this
+for established TCP and connected UDP sockets.
+
+It may add an additional cost for pure routing workloads that
 reduces overall throughput, in such case you should disable it.
-Default: 1
-</code></pre><p>其实现大体就是在socket(sock)里缓存了路由的结果(dst)，一个包到达的时候，先去找这个包有没有对应的socket，如果有的话，看看socket里的dst存不存在，如果存在的话就直接给置了包对应的input函数ip_forward，并且由此绕过了后面的路由代码(因为不需要了)。</p>
-</blockquote>
+Default: 1  
+</code></pre></blockquote>
+<p>其实现大体就是在socket(sock)里缓存了路由的结果(dst)，一个包到达的时候，先去找这个包有没有对应的socket，如果有的话，看看socket里的dst存不存在，如果存在的话就直接给置了包对应的dst_entry，并且由此绕过了后面的路由代码(因为不需要了)。</p>
 <p>这样一来就好解释了，由于我们是在中途inject进去的，所以建立socket的时候，缓存的路由依然是做转发的，因此在这之后，对于客户端发来的ack包，由于一开始就查到了socket中dst_entry，所以就绕开了路由的代码，也就绕开了我们将它们直接转向本地的代码，而去了缓存下来的转发流程，由于在prerouting的时候被打上了mark，所以他们在之后被当做不该出现的包被丢掉了。所以作为上层的socket来说，始终收不到客户端发来的ack包，所以就不断重发，而客户端也因此不断的继续回ack包，知道最终上层超时，连接失败。</p>
 <p>由于如文档所说，这个属性因为上来不管包是不是到本地都会去查找相应的socket，因此对于转发为主的网络设备其实是不利(大多数情况下会失败，类似分支预测失误)的，所以最终方案打算直接禁掉这个功能。</p>
 ]]></content>
