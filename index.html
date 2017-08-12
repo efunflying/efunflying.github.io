@@ -253,6 +253,213 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/08/12/rps-softirq-load-balance/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Allen Fang">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="迎风飞翔">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/08/12/rps-softirq-load-balance/" itemprop="url">(译)多核系统的软中断均衡</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-12T16:53:42+08:00">
+                2017-08-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>最近从QA那里听到一件尴尬事，我们正在评估的一台用于面向更低端市场的设备L，在防火墙性能上的表现，竟然比现有的那台最低端的设备B还要好。究其原因，是因为L虽然只是双核（B是4核），但是单核主频却比B更高，虽然之前同事针对多核做过优化，但他使用的优化策略是把网卡的软中断，依次一一绑定到固定的CPU上，如此一来，在单口进单口出的防火墙测试下，更多的核就没有优势了，反而这个时候主频变成了决定性的因素。听到这个消息的第一印象就是这样的优化方案存在问题，如果可以把全局的软中断分布到各个CPU上，那么这个问题，也许就不存在了。</p>
+<p>放狗一搜，找到一篇不错的文章，顺手翻译一下，看起来对于目前产品遇到的这个问题，是一剂良方。</p>
+<p>=================================译文分割线==================================</p>
+<p>几年前我测试过网络中断亲缘性 — 设置 ~0为CPU掩码来在所有CPU核间平衡网络中断，这样就可以让所有的软中断实例并行的执行。在CPU核间这样的中断分布有时候并不是一个好主意，因为CPU本来有cache计算负荷的能力，以及还有可能发生包的乱序。在多数情况下对于运行TCP应用的服务器（比如说Web服务器），并不建议这样做。然而此能力对于一些进行大量软中断处理的底层包应用，如防火墙，路由器以及Anti-DDos方案(要求对大部分的包尽快的drop掉)来说是至关重要的。所以一度，我以为在CPU核间共享软中断是可行的。</p>
+<p>为了让软中断在CPU核间共享，你只需要如此：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ for irq in `grep eth0 /proc/interrupts | cut -d: -f1`; do \</div><div class="line">    echo ffffff &gt; /proc/irq/$irq/smp_affinity; \</div><div class="line">done</div></pre></td></tr></table></figure>
+<p>这使你的APIC将中断以round-robin(也可能用某些更聪明的技术)的方式分布到所有的CPU上。并且在我的测试中，也是正常工作的。</p>
+<p>最近我们的客户对这个能力有concern，所以我写了个很简单的测试内核模块，这些模块仅仅用来产生更多的软中断工作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">#include &lt;linux/kernel.h&gt;</div><div class="line">#include &lt;linux/module.h&gt;</div><div class="line">#include &lt;linux/netfilter.h&gt;</div><div class="line">#include &lt;linux/netfilter_ipv4.h&gt;</div><div class="line"></div><div class="line">MODULE_LICENSE(&quot;GPL&quot;);</div><div class="line"></div><div class="line">/**</div><div class="line"> * Just eat some local CPU time and accept the packet.</div><div class="line"> */</div><div class="line">static unsigned int st_hook(unsigned int hooknum, struct sk_buff *skb,</div><div class="line">        const struct net_device *in,</div><div class="line">        const struct net_device *out,</div><div class="line">        int (*okfn)(struct sk_buff *))</div><div class="line">&#123;</div><div class="line">    unsigned int i;</div><div class="line">    for (i = 0; i &lt;= 1000 * 1000; ++i)</div><div class="line">        skb_linearize(skb);</div><div class="line"></div><div class="line">    return NF_ACCEPT;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static struct nf_hook_ops st_ip_ops[] __read_mostly = &#123;</div><div class="line">    &#123;</div><div class="line">        .hook = st_hook,</div><div class="line">        .owner = THIS_MODULE,</div><div class="line">        .pf = PF_INET,</div><div class="line">        .hooknum = NF_INET_PRE_ROUTING,</div><div class="line">        .priority = NF_IP_PRI_FIRST,</div><div class="line">    &#125;,</div><div class="line">&#125;;</div><div class="line"></div><div class="line">static int __init st_init(void)</div><div class="line">&#123;</div><div class="line">    if (nf_register_hooks(st_ip_ops, ARRAY_SIZE(st_ip_ops))) &#123;</div><div class="line">        printk(KERN_ERR &quot;%s: can&apos;t register nf hook\n&quot;,</div><div class="line">                __FILE__);</div><div class="line">        return1;</div><div class="line">    &#125;</div><div class="line">    printk(KERN_ERR &quot;%s: loaded\n&quot;, __FILE__);</div><div class="line"></div><div class="line">    return0;</div><div class="line">&#125;</div><div class="line"></div><div class="line">static void st_exit(void)</div><div class="line">&#123;</div><div class="line">    nf_unregister_hooks(st_ip_ops, ARRAY_SIZE(st_ip_ops));</div><div class="line">    printk(KERN_ERR &quot;%s: unloaded\n&quot;, __FILE__);</div><div class="line">&#125;</div><div class="line"></div><div class="line">module_init(st_init);</div><div class="line">module_exit(st_exit);</div></pre></td></tr></table></figure>
+<p>我在系统中起了iperf，并且加上了每条channel 1Gbps的流量。当我看到24颗CPU中只有一颗在做所有的工作，而其他CPU什么都不干时，我觉得非常困惑。</p>
+<p>为了弄清楚发生了什么，我们来看一下Linux是怎样处理incoming的包，以及网卡产生的中断的(比如说，位于driver/net/ixgbe的Intel 10Gigabit PCI Express)。软中断工作于每CPU一个的内核线程中，ksoftirqd(kernel/softirq.c:ksoftirqd())，比方说你有一台4核的机器，那你就有4个ksoftirqd的线程(ksoftirqd/0, ksoftirqd/1, ksoftirqd/2 and ksoftirqd/3)。ksoftirqd()调用do_softirq()，后者又进一步调用__do_softirq()，__do_softirq()利用softirq_vec向量来获取当前软中断类型所需要的handler（如用于接收软中断的NET_RX_SOFTIRQ或用于发送软中断的NET_TX_SOFTIRQ）。接下去的一部是handler调用虚函数action()。对于NET_RX_SOFTIRQ来说，net/core/dev.c中的net_rx_action()就是在这里被调用的。net_rx_action()从每CPU一个的queue softnet_data中读取napi_struct以及调用虚函数poll() —— 一个NAPI callback（在我们这个case中是ixgbe_poll()），这个函数真正的从设备ring queue中读入包。驱动在ixgbe_intr()中处理中断，此函数通过调用__napi_schedule()运行NAPI，__napi_schedule将当前的napi_struct推入每CPU一个的softnet_data-&gt;poll_list，正是从这里，同一个CPU上的net_rx_action()读取包。因此软中断跑在收到硬件中断的同一个核上。</p>
+<p>这样一来，理论上如果硬件中断被分去N个核，有且仅有这N个核会去执行软中断。所以我看了一下/proc/interrupts，发现当我为中断设置~0的掩码于smp_affinity时（实际上我有一块MSI-X的卡，所以我为这张卡的所有中断向量设置了掩码），事实上只有第0号CPU在接收网卡上的中断。</p>
+<p>我开始google，到底为什么中断没有分不到所有的核。我首先找到的几个topic，是由Alexander Sandler写的几篇好文：<br><a href="http://www.alexonlinux.com/smp-affinity-and-proper-interrupt-handling-in-linux" target="_blank" rel="external">SMP affinity and proper interrupt handling in Linux</a><br><a href="http://www.alexonlinux.com/why-interrupt-affinity-with-multiple-cores-is-not-such-a-good-thing" target="_blank" rel="external">Why interrupt affinity with multiple cores is not such a good thing</a><br><a href="http://www.alexonlinux.com/msi-x-the-right-way-to-spread-interrupt-load" target="_blank" rel="external">MSI-X – the right way to spread interrupt load</a></p>
+<p>按照这些文章，不是所有的硬件都有能力将中断分布到CPU的各个核上。在我的测试中，我使用了某个特定型号的IBM Server，但是我的客户不是这样，他们使用了很不一样的硬件。这就是为什么我在我先前的测试中看到了美妙的画面，而在其他的硬件上看到了截然不同的行为。</p>
+<p>好消息是，在linux 2.6.35中引入了很棒的feature——RPS（Receive Packet Steering）。这个feature的核心就是/dev/net/core.c中的get_rps_cpu()，这个函数由incoming包的SRC IP和DST IP计算出一个hash值，并且基于这个hash值，确定把包发送给那个CPU。netif_receive_skb()或者netif_rx()，它们调用此函数将包放入合适的，每CPU一个的queue中，这些包将在未来就地(CPU)由软中断处理。所以两个重要的效果是：</p>
+<pre><code>1. 包由不同的CPU处理（这里的处理，我通常指Netfilter的pre-routing hooks）
+2. 属于同一个TCP流的包不太可能发生乱序（包乱序一直是影响TCP性能的一个著名问题，这一点可以参考[Beyond softnet](http://static.usenix.org/publications/library/proceedings/als01/jamal.html)的例子）。
+</code></pre><p>要启用这一feature，你需要像下面这样指定CPU的掩码（此例中的网卡通过MSI-X连接，并有8个tx-rx队列，所以我们需要update所有这些队列的掩码）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ for i in `seq 0 7`; do \</div><div class="line">    echo fffffff &gt; /sys/class/net/eth0/queues/rx-$i/rps_cpus ; \</div><div class="line">done</div></pre></td></tr></table></figure></p>
+<p>在运行linux-2.6.35以及设置所有CPU都能处理软中断后，我得到了top里可以看到的如下不错的结果：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">2238 root      20   0  411m  888  740 S  152  0.0   2:38.94 iperf</div><div class="line">  10 root      20   0     0    0    0 R  100  0.0   0:35.44 ksoftirqd/2</div><div class="line">  19 root      20   0     0    0    0 R  100  0.0   0:46.48 ksoftirqd/5</div><div class="line">  22 root      20   0     0    0    0 R  100  0.0   0:29.10 ksoftirqd/6</div><div class="line">  25 root      20   0     0    0    0 R  100  0.0   2:47.36 ksoftirqd/7</div><div class="line">  28 root      20   0     0    0    0 R  100  0.0   0:33.73 ksoftirqd/8</div><div class="line">  31 root      20   0     0    0    0 R  100  0.0   0:46.63 ksoftirqd/9</div><div class="line">  40 root      20   0     0    0    0 R  100  0.0   0:45.33 ksoftirqd/12</div><div class="line">  46 root      20   0     0    0    0 R  100  0.0   0:29.10 ksoftirqd/14</div><div class="line">  49 root      20   0     0    0    0 R  100  0.0   0:47.35 ksoftirqd/15</div><div class="line">  52 root      20   0     0    0    0 R  100  0.0   2:33.74 ksoftirqd/16</div><div class="line">  55 root      20   0     0    0    0 R  100  0.0   0:46.92 ksoftirqd/17</div><div class="line">  58 root      20   0     0    0    0 R  100  0.0   0:32.07 ksoftirqd/18</div><div class="line">  67 root      20   0     0    0    0 R  100  0.0   0:46.63 ksoftirqd/21</div><div class="line">  70 root      20   0     0    0    0 R  100  0.0   0:28.95 ksoftirqd/22</div><div class="line">  73 root      20   0     0    0    0 R  100  0.0   0:45.03 ksoftirqd/23</div><div class="line">   7 root      20   0     0    0    0 R   99  0.0   0:47.97 ksoftirqd/1</div><div class="line">  37 root      20   0     0    0    0 R   99  0.0   2:42.29 ksoftirqd/11</div><div class="line">  34 root      20   0     0    0    0 R   77  0.0   0:28.78 ksoftirqd/10</div><div class="line">  64 root      20   0     0    0    0 R   76  0.0   0:30.34 ksoftirqd/20</div></pre></td></tr></table></figure>
+<p>正如我们看到的，几乎所有的core都在处理软中断。</p>
+<p>以下是原文：</p>
+<blockquote>
+<h1 id="scaling-softirq-among-many-CPU-cores"><a href="#scaling-softirq-among-many-CPU-cores" class="headerlink" title="scaling softirq among many CPU cores"></a>scaling softirq among many CPU cores</h1><p>Some years ago I have tested network interrupts affinity - you set ~0 as a CPU mask to balance network interrupts among all your CPU cores and you get all softirq instances running in parallel. Such interrupts distribution among CPU cores sometimes is a bad idea due to CPU caches computational burden and probable packets reordering. In most cases it is not recommended for servers performing some TCP application (e.g. web server). However this ability is crucial for some low level packet applications like firewalls, routers or Anti-DDoS solutions (in last cases most of the packets must be dropped as quick as possible), which do a lot of work in softirq. So for some time I was thinking that there is no problem to share softirq load between CPU cores.</p>
+<p>To get softirq sharing between CPU cores you just need to do</p>
+<pre><code>$ for irq in `grep eth0 /proc/interrupts | cut -d: -f1`; do \
+    echo ffffff &gt; /proc/irq/$irq/smp_affinity; \
+done
+</code></pre><p>This makes (as I thought) your APIC to distribute interrupts between all your CPUs in round-robin fashion (or probably using some more cleaver technique). And this really was working in my tests.</p>
+<p>Recently our client concerned about this ability, so I wrote very simple testing kernel module which just makes more work in softirq:</p>
+<pre><code class="C">#include &lt;linux/kernel.h&gt;
+#include &lt;linux/module.h&gt;
+#include &lt;linux/netfilter.h&gt;
+#include &lt;linux/netfilter_ipv4.h&gt;
+
+MODULE_LICENSE("GPL");
+
+/**
+ * Just eat some local CPU time and accept the packet.
+ */
+static unsigned int st_hook(unsigned int hooknum, struct sk_buff *skb,
+        const struct net_device *in,
+        const struct net_device *out,
+        int (*okfn)(struct sk_buff *))
+{
+    unsigned int i;
+    for (i = 0; i &lt;= 1000 * 1000; ++i)
+        skb_linearize(skb);
+
+    return NF_ACCEPT;
+}
+
+static struct nf_hook_ops st_ip_ops[] __read_mostly = {
+    {
+        .hook = st_hook,
+        .owner = THIS_MODULE,
+        .pf = PF_INET,
+        .hooknum = NF_INET_PRE_ROUTING,
+        .priority = NF_IP_PRI_FIRST,
+    },
+};
+
+static int __init st_init(void)
+{
+    if (nf_register_hooks(st_ip_ops, ARRAY_SIZE(st_ip_ops))) {
+        printk(KERN_ERR "%s: can't register nf hook\n",
+                __FILE__);
+        return1;
+    }
+    printk(KERN_ERR "%s: loaded\n", __FILE__);
+
+    return0;
+}
+
+static void st_exit(void)
+{
+    nf_unregister_hooks(st_ip_ops, ARRAY_SIZE(st_ip_ops));
+    printk(KERN_ERR "%s: unloaded\n", __FILE__);
+}
+
+module_init(st_init);
+module_exit(st_exit);
+</code></pre>
+<p>I loaded the system with iperf over 1Gbps channel. And I was very confused when see that only one CPU of 24-cores machine was doing whole the work and all other CPUs was doing nothing!</p>
+<p>To understand what’s going on lets have a look how Linux handles incoming packets and interrupts from network card (e.g. Intel 10 Gigabit PCI Express which is placed at drivers/net/ixgbe). Softirq works in per-cpu kernel threads, ksoftirqd (kernel/softirq.c:ksoftirqd()), i.e. if you have 4-cores machine, then you have 4 ksoftirqd threads (ksoftirqd/0, ksoftirqd/1, ksoftirqd/2 and ksoftirqd/3). ksoftirqd() calls do_softirq(), which by-turn calls <strong>do_softirq(). The last one uses softirq_vec vector to get required hadler for current softirq type (e.g. NET_RX_SOFTIRQ for receiving or NET_TX_SOFTIRQ for sending softirqs correspondingly).The next step is to call virtual function action() for the handler. For NET_RX_SOFTIRQ net_rx_action() (net/core/dev.c) is called here.net_rx_action() reads napi_struct from per-cpu queue softnet_data and calls virtual function poll() - a NAPI callback (ixgbe_poll() in our case) which actually reads packets from the device ring queues.The driver processes interrupts in ixgbe_intr(). This function runs NAPI through call </strong>napi_schedule(),which pushes current napi_struct to per-cpu softnet_data-&gt;poll_list, which net_rx_action() reads packets (on the same CPU) from. Thus softirq runs on the same core which received hardware interrupt.</p>
+<p>This way theoretically if harware interrupts are going to N cores, then these and only these N cores are doing softirq. So I had a look at /proc/interrupts statistics and saw that only one 0th core is actually receiving interrupts from NIC while I set ~0 mask in smp_affinity for the interupt (actually I had MSI-X card, so I set the mask to all the interrupt vectors for the card).</p>
+<p>I started googling for the answers why on earth interupts do not distribute among all the cores. The first topics which I found were nice articles by Alexander Sandler:<br><a href="http://www.alexonlinux.com/smp-affinity-and-proper-interrupt-handling-in-linux" target="_blank" rel="external">SMP affinity and proper interrupt handling in Linux</a><br><a href="http://www.alexonlinux.com/why-interrupt-affinity-with-multiple-cores-is-not-such-a-good-thing" target="_blank" rel="external">Why interrupt affinity with multiple cores is not such a good thing</a><br><a href="http://www.alexonlinux.com/msi-x-the-right-way-to-spread-interrupt-load" target="_blank" rel="external">MSI-X – the right way to spread interrupt load</a></p>
+<p>Following these articles not all hardware is actually able to spread interrupts between CPU cores. During my tests I was using IBM servers of particular model, but this is not the case of the client - they use very different hardware. This is why I saw one nice picture on my previous tests, but faced quite different behaviour on other hardware.</p>
+<p>The good news is that linux 2.6.35 has introduced nice feature -  RPS (Receive Packet Steering). The core of the feature is get_rps_cpu() from dev/net/core.c, which computes a hash from IP source and destination addresses of an incoming packet and determines a which CPU send the packet to based on the hash. netif_receive_skb() or netif_rx() which call the function puts the packet to appropriate per-cpu queue for further processing by softirq. So there are two important consequences:</p>
+<pre><code>1. packets are processed by different CPUs (with processing I mostly mean Netfilter pre-routing hooks);
+2. it is unlikely that packets belonging to the same TCP stream are reordered (packets reordering is a well-known problem for TCP performance, see for example [Beyond softnet](http://static.usenix.org/publications/library/proceedings/als01/jamal.html)).
+</code></pre><p>To enable the feature you should specify CPUs mask as following (the adapter from the example is connected via MSI-X and has 8 tx-rx queues, so we need to update masks for all the queues):<br>    $ for i in <code>seq 0 7</code>; do \<br>        echo fffffff &gt; /sys/class/net/eth0/queues/rx-$i/rps_cpus ; \<br>    done</p>
+<p>After running linux-2.6.35 and setting all CPUs to be able to process softirq I got following nice picture in top:</p>
+<p>  2238 root      20   0  411m  888  740 S  152  0.0   2:38.94 iperf<br>    10 root      20   0     0    0    0 R  100  0.0   0:35.44 ksoftirqd/2<br>    19 root      20   0     0    0    0 R  100  0.0   0:46.48 ksoftirqd/5<br>    22 root      20   0     0    0    0 R  100  0.0   0:29.10 ksoftirqd/6<br>    25 root      20   0     0    0    0 R  100  0.0   2:47.36 ksoftirqd/7<br>    28 root      20   0     0    0    0 R  100  0.0   0:33.73 ksoftirqd/8<br>    31 root      20   0     0    0    0 R  100  0.0   0:46.63 ksoftirqd/9<br>    40 root      20   0     0    0    0 R  100  0.0   0:45.33 ksoftirqd/12<br>    46 root      20   0     0    0    0 R  100  0.0   0:29.10 ksoftirqd/14<br>    49 root      20   0     0    0    0 R  100  0.0   0:47.35 ksoftirqd/15<br>    52 root      20   0     0    0    0 R  100  0.0   2:33.74 ksoftirqd/16<br>    55 root      20   0     0    0    0 R  100  0.0   0:46.92 ksoftirqd/17<br>    58 root      20   0     0    0    0 R  100  0.0   0:32.07 ksoftirqd/18<br>    67 root      20   0     0    0    0 R  100  0.0   0:46.63 ksoftirqd/21<br>    70 root      20   0     0    0    0 R  100  0.0   0:28.95 ksoftirqd/22<br>    73 root      20   0     0    0    0 R  100  0.0   0:45.03 ksoftirqd/23<br>     7 root      20   0     0    0    0 R   99  0.0   0:47.97 ksoftirqd/1<br>    37 root      20   0     0    0    0 R   99  0.0   2:42.29 ksoftirqd/11<br>    34 root      20   0     0    0    0 R   77  0.0   0:28.78 ksoftirqd/10<br>    64 root      20   0     0    0    0 R   76  0.0   0:30.34 ksoftirqd/20</p>
+<p>So as we see almost all of the cores are doing softirqs.</p>
+</blockquote>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
     <link itemprop="mainEntityOfPage" href="https://efunflying.github.io/2017/08/07/golang-notes/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1431,7 +1638,7 @@ Default: 1
           
             <div class="site-state-item site-state-posts">
               <a href="/archives/">
-                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-count">10</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
